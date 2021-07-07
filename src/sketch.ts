@@ -43,14 +43,14 @@ function draw() {
             color: "blue"
         },
     ]
-    // Translate to the middle (barycenter) of the cars and scale to be close up to the cars
+    // Translate to the middle of the cars and scale to be close up to the cars
     const x_min = cars.reduce((x_min, car) => min(x_min, car.position[0]), +Infinity)
     const x_max = cars.reduce((x_max, car) => max(x_max, car.position[0]), -Infinity)
     const y_min = cars.reduce((y_min, car) => min(y_min, car.position[1]), +Infinity)
     const y_max = cars.reduce((y_max, car) => max(y_max, car.position[1]), -Infinity)
     const scale_x = width  / (x_max - x_min)
     const scale_y = height / (y_max - y_min)
-    const actual_scale = min((params.Smooth_Min ? smin(scale_x, scale_y, 1) : min(scale_x, scale_y)) / 2, 50.)
+    const actual_scale = min((params.Smooth_Min ? smin(scale_x, scale_y, 10) : min(scale_x, scale_y)) / 2, 50.)
     translate(width/2, height/2)
     scale(actual_scale, actual_scale)
     translate(-(x_min + x_max)/2, -(y_min + y_max)/2)

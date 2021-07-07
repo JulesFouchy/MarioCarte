@@ -75,7 +75,7 @@ function draw() {
     var y_max = cars.reduce(function (y_max, car) { return max(y_max, car.position[1]); }, -Infinity);
     var scale_x = width / (x_max - x_min);
     var scale_y = height / (y_max - y_min);
-    var actual_scale = min((params.Smooth_Min ? smin(scale_x, scale_y, 1) : min(scale_x, scale_y)) / 2, 50.);
+    var actual_scale = min((params.Smooth_Min ? smin(scale_x, scale_y, 10) : min(scale_x, scale_y)) / 2, 50.);
     translate(width / 2, height / 2);
     scale(actual_scale, actual_scale);
     translate(-(x_min + x_max) / 2, -(y_min + y_max) / 2);
