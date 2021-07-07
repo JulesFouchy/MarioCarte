@@ -4,30 +4,22 @@
 
 const gui = new dat.GUI()
 const params = {
-    Car_Size: 5,
     Smooth_Min: true,
 }
-gui.add(params, "Car_Size", 0, 100, 1)
 gui.add(params, "Smooth_Min")
+const CAR_SIZE = 5
+let circuit: Circuit
 
 // -------------------
 //       Drawing
 // -------------------
 
-function smin(a: number, b: number, k: number)
-{
+// Like a minimum, but smoother !
+// Look at https://www.iquilezles.org/www/articles/smin/smin.htm
+function smin(a: number, b: number, k: number) {
     a = pow( a, k )
     b = pow( b, k )
     return pow( (a*b)/(a+b), 1.0/k )
-}
-
-let circuit: Circuit
-
-function draw_circuit() {
-    noFill()
-    stroke("white")
-    strokeWeight(params.Car_Size*1.1)
-    circuit.show()
 }
 
 interface Car {
@@ -35,44 +27,37 @@ interface Car {
     position: number[];
 }
 
-function draw_car(car: Car) {
-    fill(car.color)
-    noStroke()
-    ellipse(car.position[0], car.position[1], params.Car_Size)
-}
-
 function draw() {
-    push()
-    background(0)
+    // Compute car positions
     const cars: Car[] = [
         {
-            position: circuit.eval(frameCount * 0.01),
+            position: circuit.eval(0.2 + frameCount * 0.01),
             color: "red"
         },
         {
-            position: circuit.eval(frameCount * 0.0111),
+            position: circuit.eval(0.2 + frameCount * 0.0111),
             color: "green"
         },
         {
-            position: circuit.eval(frameCount * 0.011),
+            position: circuit.eval(0.2 + frameCount * 0.011),
             color: "blue"
         },
     ]
-    const x_left = cars.reduce((x_left, car) => min(x_left, car.position[0]), +Infinity)
-    const x_rght = cars.reduce((x_rght, car) => max(x_rght, car.position[0]), -Infinity)
-    const y_left = cars.reduce((y_left, car) => min(y_left, car.position[1]), +Infinity)
-    const y_rght = cars.reduce((y_rght, car) => max(y_rght, car.position[1]), -Infinity)
-    console.log(x_left, x_rght, y_left, y_rght)
+    // Translate to the middle (barycenter) of the cars and scale to be close up to the cars
+    const x_min = cars.reduce((x_min, car) => min(x_min, car.position[0]), +Infinity)
+    const x_max = cars.reduce((x_max, car) => max(x_max, car.position[0]), -Infinity)
+    const y_min = cars.reduce((y_min, car) => min(y_min, car.position[1]), +Infinity)
+    const y_max = cars.reduce((y_max, car) => max(y_max, car.position[1]), -Infinity)
+    const scale_x = width  / (x_max - x_min)
+    const scale_y = height / (y_max - y_min)
+    const actual_scale = min((params.Smooth_Min ? smin(scale_x, scale_y, 1) : min(scale_x, scale_y)) / 2, 50.)
     translate(width/2, height/2)
-    const sx = width  / (x_rght - x_left)
-    const sy = height / (y_rght - y_left)
-    const s = (params.Smooth_Min ? smin(sx, sy, 1) : min(sx, sy)) / 2
-    scale(s, s)
-    translate(-(x_left + x_rght)/2, -(y_left + y_rght)/2)
-    // scale(width, height)
+    scale(actual_scale, actual_scale)
+    translate(-(x_min + x_max)/2, -(y_min + y_max)/2)
+    // Drawing
+    background(0)
     draw_circuit()
     cars.forEach(car => draw_car(car))
-    pop()
 }
 
 // -------------------
@@ -80,6 +65,7 @@ function draw() {
 // -------------------
 
 function setup() {
+    frameCount
     p6_CreateCanvas()
     circuit = new Circuit()
 }

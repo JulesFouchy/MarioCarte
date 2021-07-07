@@ -31,63 +31,60 @@ var Circuit = (function () {
     };
     return Circuit;
 }());
-var gui = new dat.GUI();
-var params = {
-    Car_Size: 5,
-    Smooth_Min: true,
-};
-gui.add(params, "Car_Size", 0, 100, 1);
-gui.add(params, "Smooth_Min");
-function smin(a, b, k) {
-    a = pow(a, k);
-    b = pow(b, k);
-    return pow((a * b) / (a + b), 1.0 / k);
-}
-var circuit;
 function draw_circuit() {
     noFill();
     stroke("white");
-    strokeWeight(params.Car_Size * 1.1);
+    strokeWeight(CAR_SIZE * 1.1);
     circuit.show();
 }
 function draw_car(car) {
     fill(car.color);
     noStroke();
-    ellipse(car.position[0], car.position[1], params.Car_Size);
+    ellipse(car.position[0], car.position[1], CAR_SIZE);
+}
+var gui = new dat.GUI();
+var params = {
+    Smooth_Min: true,
+};
+gui.add(params, "Smooth_Min");
+var CAR_SIZE = 5;
+var circuit;
+function smin(a, b, k) {
+    a = pow(a, k);
+    b = pow(b, k);
+    return pow((a * b) / (a + b), 1.0 / k);
 }
 function draw() {
-    push();
-    background(0);
     var cars = [
         {
-            position: circuit.eval(frameCount * 0.01),
+            position: circuit.eval(0.2 + frameCount * 0.01),
             color: "red"
         },
         {
-            position: circuit.eval(frameCount * 0.0111),
+            position: circuit.eval(0.2 + frameCount * 0.0111),
             color: "green"
         },
         {
-            position: circuit.eval(frameCount * 0.011),
+            position: circuit.eval(0.2 + frameCount * 0.011),
             color: "blue"
         },
     ];
-    var x_left = cars.reduce(function (x_left, car) { return min(x_left, car.position[0]); }, +Infinity);
-    var x_rght = cars.reduce(function (x_rght, car) { return max(x_rght, car.position[0]); }, -Infinity);
-    var y_left = cars.reduce(function (y_left, car) { return min(y_left, car.position[1]); }, +Infinity);
-    var y_rght = cars.reduce(function (y_rght, car) { return max(y_rght, car.position[1]); }, -Infinity);
-    console.log(x_left, x_rght, y_left, y_rght);
+    var x_min = cars.reduce(function (x_min, car) { return min(x_min, car.position[0]); }, +Infinity);
+    var x_max = cars.reduce(function (x_max, car) { return max(x_max, car.position[0]); }, -Infinity);
+    var y_min = cars.reduce(function (y_min, car) { return min(y_min, car.position[1]); }, +Infinity);
+    var y_max = cars.reduce(function (y_max, car) { return max(y_max, car.position[1]); }, -Infinity);
+    var scale_x = width / (x_max - x_min);
+    var scale_y = height / (y_max - y_min);
+    var actual_scale = min((params.Smooth_Min ? smin(scale_x, scale_y, 1) : min(scale_x, scale_y)) / 2, 50.);
     translate(width / 2, height / 2);
-    var sx = width / (x_rght - x_left);
-    var sy = height / (y_rght - y_left);
-    var s = (params.Smooth_Min ? smin(sx, sy, 1) : min(sx, sy)) / 2;
-    scale(s, s);
-    translate(-(x_left + x_rght) / 2, -(y_left + y_rght) / 2);
+    scale(actual_scale, actual_scale);
+    translate(-(x_min + x_max) / 2, -(y_min + y_max) / 2);
+    background(0);
     draw_circuit();
     cars.forEach(function (car) { return draw_car(car); });
-    pop();
 }
 function setup() {
+    frameCount;
     p6_CreateCanvas();
     circuit = new Circuit();
 }
