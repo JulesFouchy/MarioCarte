@@ -33,25 +33,63 @@ var Circuit = (function () {
 }());
 var gui = new dat.GUI();
 var params = {
-    Car_Size: 30,
-    Download_Image: function () { return save(); },
+    Car_Size: 5,
+    Smooth_Min: true,
 };
 gui.add(params, "Car_Size", 0, 100, 1);
-gui.add(params, "Download_Image");
-function draw() {
-    background(0);
+gui.add(params, "Smooth_Min");
+function smin(a, b, k) {
+    a = pow(a, k);
+    b = pow(b, k);
+    return pow((a * b) / (a + b), 1.0 / k);
+}
+var circuit;
+function draw_circuit() {
     noFill();
     stroke("white");
-    strokeWeight(1);
-    var circuit = new Circuit();
+    strokeWeight(params.Car_Size * 1.1);
     circuit.show();
-    fill("red");
+}
+function draw_car(car) {
+    fill(car.color);
     noStroke();
-    var pos = circuit.eval(frameCount / 50);
-    ellipse(pos[0], pos[1], 3);
+    ellipse(car.position[0], car.position[1], params.Car_Size);
+}
+function draw() {
+    push();
+    background(0);
+    var cars = [
+        {
+            position: circuit.eval(frameCount * 0.01),
+            color: "red"
+        },
+        {
+            position: circuit.eval(frameCount * 0.0111),
+            color: "green"
+        },
+        {
+            position: circuit.eval(frameCount * 0.011),
+            color: "blue"
+        },
+    ];
+    var x_left = cars.reduce(function (x_left, car) { return min(x_left, car.position[0]); }, +Infinity);
+    var x_rght = cars.reduce(function (x_rght, car) { return max(x_rght, car.position[0]); }, -Infinity);
+    var y_left = cars.reduce(function (y_left, car) { return min(y_left, car.position[1]); }, +Infinity);
+    var y_rght = cars.reduce(function (y_rght, car) { return max(y_rght, car.position[1]); }, -Infinity);
+    console.log(x_left, x_rght, y_left, y_rght);
+    translate(width / 2, height / 2);
+    var sx = width / (x_rght - x_left);
+    var sy = height / (y_rght - y_left);
+    var s = (params.Smooth_Min ? smin(sx, sy, 1) : min(sx, sy)) / 2;
+    scale(s, s);
+    translate(-(x_left + x_rght) / 2, -(y_left + y_rght) / 2);
+    draw_circuit();
+    cars.forEach(function (car) { return draw_car(car); });
+    pop();
 }
 function setup() {
     p6_CreateCanvas();
+    circuit = new Circuit();
 }
 function windowResized() {
     p6_ResizeCanvas();
